@@ -3,13 +3,14 @@ require "download_strategy"
 # doomscrum's source repo is private (docs/adoption/2026-07-07-installable-releases/);
 # authenticate release-asset downloads with HOMEBREW_GITHUB_API_TOKEN.
 class DoomscrumPrivateReleaseDownloadStrategy < CurlDownloadStrategy
-  def _fetch(url:, resolved_url:, timeout:)
+  def initialize(url, name, version, **meta)
     token = Homebrew::EnvConfig.github_api_token
     raise CurlDownloadStrategyError, "Set HOMEBREW_GITHUB_API_TOKEN (repo-scoped PAT) to install from this private-repo tap." if token.blank?
 
-    ohai "Downloading #{url}" if $stdout.tty?
-    curl_download resolved_url, to: temporary_path, timeout: timeout,
-                   headers: ["Authorization: token #{token}", "Accept: application/octet-stream"]
+    meta[:headers] ||= []
+    meta[:headers] << "Authorization: token #{token}"
+    meta[:headers] << "Accept: application/octet-stream"
+    super
   end
 end
 
